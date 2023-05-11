@@ -6,6 +6,7 @@ import com.valleon.moviecatalogservice.models.Rating;
 import com.valleon.moviecatalogservice.models.UserRating;
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,16 +26,19 @@ public class MovieCatalogResource {
     private RestTemplate restTemplate;
 
     @Autowired
+    private DiscoveryClient discoveryClient;
+
+    @Autowired
     private WebClient.Builder webClientBuilder;
 
     @RequestMapping("/{userId}")
     public List<CatalogItem> getCatalog(@PathVariable("userId") String userId) {
         //get all rated movie IDs
-        UserRating ratings = restTemplate.getForObject("http://localhost:8083/ratingsdata/users/" + userId, UserRating.class );
+        UserRating ratings = restTemplate.getForObject("http://ratings-data-service/ratingsdata/users/" + userId, UserRating.class );
 
         return ratings.getGetUserRating().stream().map(rating -> {
             // For each movie ID, call movie info service and get details
-           Movie movie = restTemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId(), Movie.class);
+           Movie movie = restTemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieId(), Movie.class);
                           /*  Movie movie = webClientBuilder.build()
                                     .get()
                                     .uri("http://localhost:8082/movies/" + rating.getMovieId())
